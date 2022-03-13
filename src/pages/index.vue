@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { BlockState } from "~/types"
+import { isDev, toggleDev } from "~/composables"
 
 const height = $ref(10)
 const width = $ref(10)
 
-const state = $ref(
-  Array.from({ length: height }, (_, y) =>
+let state = $ref<BlockState[][]>([])
+
+const reset = () => {
+  mineGenerated = false
+  state = Array.from({ length: height }, (_, y) =>
     Array.from(
       { length: width },
       (_, x) =>
@@ -18,11 +22,11 @@ const state = $ref(
           mine: false,
         } as BlockState),
     ),
-  ),
-)
+  )
+}
 
 // 生成炸弹
-const generateMines = (initial: BlockState) => {
+const generateMines = (state: BlockState[][], initial: BlockState) => {
   for (const row of state) {
     for (const block of row) {
       if (Math.abs(initial.x - block.x) <= 1) continue
@@ -32,7 +36,7 @@ const generateMines = (initial: BlockState) => {
     }
   }
 
-  updateNumbers()
+  updateNumbers(state)
 }
 
 const directions = [
@@ -47,7 +51,7 @@ const directions = [
 ]
 
 // 更新每个方块周围的炸弹数
-const updateNumbers = () => {
+const updateNumbers = (state: BlockState[][]) => {
   state.forEach((row, y) => {
     row.forEach((block, x) => {
       if (block.mine) return
@@ -59,30 +63,11 @@ const updateNumbers = () => {
   })
 }
 
-const numberColors = [
-  "text-transparent",
-  "text-blue-500",
-  "text-green-500",
-  "text-yellow-500",
-  "text-orange-500",
-  "text-red-500",
-  "text-purple-500",
-  "text-pink-500",
-  "text-teal-500",
-]
-
-const getBlockClass = (block: BlockState) => {
-  if (block.flagged) return "bg-gray-500/10"
-  if (!block.revealed) return "bg-gray-500/10 hover:bg-gray/20"
-  return block.mine ? "text-red" : numberColors[block.adjacentMines]
-}
-
 let mineGenerated = $ref(false)
-let dev = $ref(false)
 
 const onClick = (block: BlockState) => {
   if (!mineGenerated) {
-    generateMines(block)
+    generateMines(state, block)
     mineGenerated = true
   }
 
@@ -135,6 +120,7 @@ const checkGameState = () => {
 }
 
 watchEffect(checkGameState)
+reset()
 </script>
 
 <template>
@@ -148,28 +134,21 @@ watchEffect(checkGameState)
       justify-center
       items-center
     >
-      <button
+      <MineBlock
         v-for="(block, x) in row"
         :key="x"
-        m="0.5"
-        flex="~"
-        justify-center
-        items-center
-        w-10
-        h-10
-        border="1 gray-400/30"
-        :class="getBlockClass(block)"
+        :block="block"
         @click="onClick(block)"
         @contextmenu.prevent="onRightClick(block)"
-      >
-        <template v-if="block.flagged">
-          <div i-mdi-flag text-red />
-        </template>
-        <template v-else-if="block.revealed || dev">
-          <div v-if="block.mine" i-mdi-mine />
-          <div v-else>{{ block.adjacentMines }}</div>
-        </template>
-      </button>
+      />
     </div>
+  </div>
+
+  <div flex="~ gap-1" justify-center items-center>
+    <button btn @click="toggleDev()">
+      {{ isDev ? "DEV" : "NORMAL" }}
+    </button>
+
+    <button btn @click="reset()">RESET</button>
   </div>
 </template>
