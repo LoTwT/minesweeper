@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import type { BlockState, GameState } from "~/types"
 import { isDev, toggleDev } from "~/composables"
+import { Ref } from "vue"
 
 let height = $ref(10)
 let width = $ref(10)
 
-let state = $ref<GameState>()
+const state = ref<GameState>() as Ref<GameState>
 
 const reset = () => {
-  state = {
+  state.value = {
     mineGenerated: false,
     gameState: "play",
     board: Array.from({ length: height }, (_, y) =>
@@ -67,17 +68,17 @@ const updateNumbers = (state: BlockState[][]) => {
 }
 
 const onClick = (block: BlockState) => {
-  if (state.gameState !== "play") return
+  if (state.value.gameState !== "play") return
 
-  if (!state.mineGenerated) {
-    generateMines(state.board, block)
-    state.mineGenerated = true
+  if (!state.value.mineGenerated) {
+    generateMines(state.value.board, block)
+    state.value.mineGenerated = true
   }
 
   // 展开
   block.revealed = true
   if (block.mine) {
-    state.gameState = "lost"
+    state.value.gameState = "lost"
     showAllMines()
     return
   }
@@ -103,7 +104,7 @@ const getSiblings = (block: BlockState) => {
 
       if (x2 < 0 || x2 >= width || y2 < 0 || y2 >= height) return undefined
 
-      return state.board[y2][x2]
+      return state.value.board[y2][x2]
     })
     .filter(Boolean) as BlockState[]
 }
@@ -111,28 +112,28 @@ const getSiblings = (block: BlockState) => {
 // 右键标记
 // 需要拦截 contextmenu
 const onRightClick = (block: BlockState) => {
-  if (state.gameState !== "play") return
+  if (state.value.gameState !== "play") return
   if (block.revealed) return
   block.flagged = !block.flagged
 }
 
 const checkGameState = () => {
-  if (!state.mineGenerated) return
+  if (!state.value.mineGenerated) return
 
-  const blocks = state.board.flat()
+  const blocks = state.value.board.flat()
 
   if (blocks.every((block) => block.revealed || block.flagged)) {
     if (blocks.some((block) => block.flagged && !block.mine)) {
-      state.gameState = "lost"
+      state.value.gameState = "lost"
       showAllMines()
     } else {
-      state.gameState = "won"
+      state.value.gameState = "won"
     }
   }
 }
 
 const showAllMines = () => {
-  state.board.flat().forEach((i) => {
+  state.value.board.flat().forEach((i) => {
     if (i.mine) {
       i.revealed = true
     }
@@ -141,6 +142,7 @@ const showAllMines = () => {
 
 reset()
 watchEffect(checkGameState)
+useStorage("minesweeper", state)
 </script>
 
 <template>
