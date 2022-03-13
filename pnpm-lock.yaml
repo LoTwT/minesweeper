@@ -3498,7 +3498,9 @@ packages:
       {
         integrity: sha512-kPmucTsCuEKk4f/2T549htcCxfkxReGkQG8j+nA0vvVhVGrjbQOiTgPk+KEA75PmrO6353p5ACXQiG0zI/O+AA==,
       }
-    deprecated: "WARNING: This project has been renamed to @volar/pug-language-service. Install using @volar/pug-language-service instead."
+    deprecated:
+      "WARNING: This project has been renamed to @volar/pug-language-service.
+      Install using @volar/pug-language-service instead."
     dependencies:
       "@volar/code-gen": 0.32.1
       "@volar/shared": 0.32.1
@@ -3515,7 +3517,9 @@ packages:
       {
         integrity: sha512-7fFYTadMF/LkoNKmawipNefFPu3MCloWqiWFgbUKsjvvAAER/dY0W7Zml0/Qaj0eXriLoe0KabA3nWTiCxXAMQ==,
       }
-    deprecated: "WARNING: This project has been renamed to @volar/typescript-language-service. Install using @volar/typescript-language-service instead."
+    deprecated: "WARNING: This project has been renamed to
+      @volar/typescript-language-service. Install using
+      @volar/typescript-language-service instead."
     dependencies:
       "@volar/shared": 0.32.1
       semver: 7.3.5
@@ -3544,7 +3548,9 @@ packages:
       {
         integrity: sha512-tme8aDa/ScQnACIvMWGOoHQsoDZAsp2qa+EGXEtqpcyPGBmrVlu0R/TAzRl43gVe6tv3qVPOv3s0XdK/1bMPBQ==,
       }
-    deprecated: "WARNING: This project has been renamed to @volar/vue-language-service. Install using @volar/vue-language-service instead."
+    deprecated:
+      "WARNING: This project has been renamed to @volar/vue-language-service.
+      Install using @volar/vue-language-service instead."
     dependencies:
       "@volar/code-gen": 0.32.1
       "@volar/html2pug": 0.32.1
