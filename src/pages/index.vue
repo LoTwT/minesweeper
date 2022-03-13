@@ -1,15 +1,5 @@
 <script setup lang="ts">
-interface BlockState {
-  x: number
-  y: number
-  // 是否被翻开
-  revealed: boolean
-  // 是不是炸弹
-  mine?: boolean
-  // 是否被标记
-  flagged?: boolean
-  adjacentMines: number
-}
+import type { BlockState } from "~/types"
 
 const height = $ref(10)
 const width = $ref(10)
@@ -24,6 +14,8 @@ const state = $ref(
           y,
           adjacentMines: 0,
           revealed: false,
+          flagged: false,
+          mine: false,
         } as BlockState),
     ),
   ),
@@ -80,7 +72,8 @@ const numberColors = [
 ]
 
 const getBlockClass = (block: BlockState) => {
-  if (!block.revealed) return "bg-gray-500/10"
+  if (block.flagged) return "bg-gray-500/10"
+  if (!block.revealed) return "bg-gray-500/10 hover:bg-gray/20"
   return block.mine ? "text-red" : numberColors[block.adjacentMines]
 }
 
@@ -122,12 +115,32 @@ const getSiblings = (block: BlockState) => {
     })
     .filter(Boolean) as BlockState[]
 }
+
+// 右键标记
+// 需要拦截 contextmenu
+const onRightClick = (block: BlockState) => {
+  if (block.revealed) return
+  block.flagged = !block.flagged
+}
+
+const checkGameState = () => {
+  if (!mineGenerated) return
+
+  const blocks = state.flat()
+
+  if (blocks.every((block) => block.revealed || block.flagged)) {
+    if (blocks.some((block) => block.flagged && !block.mine)) alert("cheat")
+    else alert("win")
+  }
+}
+
+watchEffect(checkGameState)
 </script>
 
 <template>
   <div>Minesweeper</div>
 
-  <div p5>
+  <div p5 @contextmenu.prevent>
     <div
       v-for="(row, y) in state"
       :key="y"
@@ -145,11 +158,14 @@ const getSiblings = (block: BlockState) => {
         w-10
         h-10
         border="1 gray-400/30"
-        hover="bg-gray/20"
         :class="getBlockClass(block)"
         @click="onClick(block)"
+        @contextmenu.prevent="onRightClick(block)"
       >
-        <template v-if="block.revealed || dev">
+        <template v-if="block.flagged">
+          <div i-mdi-flag text-red />
+        </template>
+        <template v-else-if="block.revealed || dev">
           <div v-if="block.mine" i-mdi-mine />
           <div v-else>{{ block.adjacentMines }}</div>
         </template>
