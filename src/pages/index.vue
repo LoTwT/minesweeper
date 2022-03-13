@@ -1,28 +1,31 @@
 <script setup lang="ts">
-import type { BlockState } from "~/types"
+import type { BlockState, GameState } from "~/types"
 import { isDev, toggleDev } from "~/composables"
 
-const height = $ref(10)
-const width = $ref(10)
+let height = $ref(10)
+let width = $ref(10)
 
-let state = $ref<BlockState[][]>([])
+let state = $ref<GameState>()
 
 const reset = () => {
-  mineGenerated = false
-  state = Array.from({ length: height }, (_, y) =>
-    Array.from(
-      { length: width },
-      (_, x) =>
-        ({
-          x,
-          y,
-          adjacentMines: 0,
-          revealed: false,
-          flagged: false,
-          mine: false,
-        } as BlockState),
+  state = {
+    mineGenerated: false,
+    gameState: "play",
+    board: Array.from({ length: height }, (_, y) =>
+      Array.from(
+        { length: width },
+        (_, x) =>
+          ({
+            x,
+            y,
+            adjacentMines: 0,
+            revealed: false,
+            flagged: false,
+            mine: false,
+          } as BlockState),
+      ),
     ),
-  )
+  }
 }
 
 // 生成炸弹
@@ -63,17 +66,21 @@ const updateNumbers = (state: BlockState[][]) => {
   })
 }
 
-let mineGenerated = $ref(false)
-
 const onClick = (block: BlockState) => {
-  if (!mineGenerated) {
-    generateMines(state, block)
-    mineGenerated = true
+  if (state.gameState !== "play") return
+
+  if (!state.mineGenerated) {
+    generateMines(state.board, block)
+    state.mineGenerated = true
   }
 
   // 展开
   block.revealed = true
-  if (block.mine) alert("boom")
+  if (block.mine) {
+    state.gameState = "lost"
+    showAllMines()
+    return
+  }
   expandZero(block)
 }
 
@@ -96,7 +103,7 @@ const getSiblings = (block: BlockState) => {
 
       if (x2 < 0 || x2 >= width || y2 < 0 || y2 >= height) return undefined
 
-      return state[y2][x2]
+      return state.board[y2][x2]
     })
     .filter(Boolean) as BlockState[]
 }
@@ -104,23 +111,36 @@ const getSiblings = (block: BlockState) => {
 // 右键标记
 // 需要拦截 contextmenu
 const onRightClick = (block: BlockState) => {
+  if (state.gameState !== "play") return
   if (block.revealed) return
   block.flagged = !block.flagged
 }
 
 const checkGameState = () => {
-  if (!mineGenerated) return
+  if (!state.mineGenerated) return
 
-  const blocks = state.flat()
+  const blocks = state.board.flat()
 
   if (blocks.every((block) => block.revealed || block.flagged)) {
-    if (blocks.some((block) => block.flagged && !block.mine)) alert("cheat")
-    else alert("win")
+    if (blocks.some((block) => block.flagged && !block.mine)) {
+      state.gameState = "lost"
+      showAllMines()
+    } else {
+      state.gameState = "won"
+    }
   }
 }
 
-watchEffect(checkGameState)
+const showAllMines = () => {
+  state.board.flat().forEach((i) => {
+    if (i.mine) {
+      i.revealed = true
+    }
+  })
+}
+
 reset()
+watchEffect(checkGameState)
 </script>
 
 <template>
@@ -128,7 +148,7 @@ reset()
 
   <div p5 @contextmenu.prevent>
     <div
-      v-for="(row, y) in state"
+      v-for="(row, y) in state.board"
       :key="y"
       flex="~"
       justify-center
