@@ -177,13 +177,15 @@ useStorage("minesweeper", state)
 <template>
   <div>Minesweeper</div>
 
-  <div p5 @contextmenu.prevent>
+  <div p5 @contextmenu.prevent w-full overflow-auto>
     <div
       v-for="(row, y) in state.board"
       :key="y"
       flex="~"
       justify-center
       items-center
+      w-max
+      ma
     >
       <MineBlock
         v-for="(block, x) in row"
