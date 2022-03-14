@@ -153,10 +153,8 @@ const checkGameState = () => {
     if (blocks.some((block) => block.flagged && !block.mine)) {
       state.value.gameState = "lost"
       showAllMines()
-      alert("lost")
     } else {
       state.value.gameState = "won"
-      alert("won")
     }
   }
 }
@@ -206,4 +204,6 @@ useStorage("minesweeper", state)
 
     <button btn @click="reset()">RESET</button>
   </div>
+
+  <Confetti :passed="state.gameState === 'won'" />
 </template>
