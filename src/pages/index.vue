@@ -3,10 +3,19 @@ import type { BlockState, GameState } from "~/types"
 import { isDev, toggleDev } from "~/composables"
 import { Ref } from "vue"
 
-let height = $ref(10)
-let width = $ref(10)
+let height = $ref(12)
+let width = $ref(12)
+let mines = $ref(30)
 
 const state = ref<GameState>() as Ref<GameState>
+const blocks = computed(() => state.value.board.flat())
+
+const minesCount = computed(() =>
+  blocks.value.reduce((count, b) => {
+    count += b.mine ? 1 : 0
+    return count
+  }, 0),
+)
 
 const reset = () => {
   state.value = {
@@ -29,16 +38,34 @@ const reset = () => {
   }
 }
 
+const random = (min: number, max: number) => {
+  return Math.random() * (max - min) + min
+}
+
+const randomInt = (min: number, max: number) => {
+  return Math.round(random(min, max))
+}
+
 // 生成炸弹
 const generateMines = (state: BlockState[][], initial: BlockState) => {
-  for (const row of state) {
-    for (const block of row) {
-      if (Math.abs(initial.x - block.x) <= 1) continue
-      if (Math.abs(initial.y - block.y) <= 1) continue
+  const placeRandom = () => {
+    const x = randomInt(0, width - 1)
+    const y = randomInt(0, height - 1)
+    const block = state[y][x]
 
-      block.mine = Math.random() < 0.2
-    }
+    if (Math.abs(initial.x - block.x) <= 1) return false
+    if (Math.abs(initial.y - block.y) <= 1) return false
+    if (block.mine) return false
+
+    block.mine = true
+    return true
   }
+
+  // 根据炸弹数随机挑选格子，设置为炸弹
+  // Array.from 用于生成循环次数
+  Array.from({ length: mines }, () => null).forEach(() => {
+    while (!placeRandom()) {}
+  })
 
   updateNumbers(state)
 }
@@ -126,10 +153,10 @@ const checkGameState = () => {
     if (blocks.some((block) => block.flagged && !block.mine)) {
       state.value.gameState = "lost"
       showAllMines()
-      alert('lost')
+      alert("lost")
     } else {
       state.value.gameState = "won"
-      alert('won')
+      alert("won")
     }
   }
 }
@@ -167,6 +194,8 @@ useStorage("minesweeper", state)
       />
     </div>
   </div>
+
+  <div pb-3>minesCount: {{ minesCount }}</div>
 
   <div flex="~ gap-1" justify-center items-center>
     <button btn @click="toggleDev()">
