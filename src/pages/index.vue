@@ -17,13 +17,27 @@ const minesCount = computed(() =>
   }, 0),
 )
 
-const reset = () => {
+const newGame = (difficulty: "easy" | "medium" | "hard") => {
+  const map: Record<"easy" | "medium" | "hard", [number, number, number]> = {
+    easy: [9, 9, 10],
+    medium: [16, 16, 40],
+    hard: [30, 16, 99],
+  }
+
+  reset(...map[difficulty])
+}
+
+const reset = (w = width, h = height, ms = mines) => {
+  width = w
+  height = h
+  mines = ms
+
   state.value = {
     mineGenerated: false,
     gameState: "play",
-    board: Array.from({ length: height }, (_, y) =>
+    board: Array.from({ length: h }, (_, y) =>
       Array.from(
-        { length: width },
+        { length: w },
         (_, x) =>
           ({
             x,
@@ -53,8 +67,11 @@ const generateMines = (state: BlockState[][], initial: BlockState) => {
     const y = randomInt(0, height - 1)
     const block = state[y][x]
 
-    if (Math.abs(initial.x - block.x) <= 1) return false
-    if (Math.abs(initial.y - block.y) <= 1) return false
+    if (
+      Math.abs(initial.x - block.x) <= 1 &&
+      Math.abs(initial.y - block.y) <= 1
+    )
+      return false
     if (block.mine) return false
 
     block.mine = true
@@ -175,6 +192,13 @@ useStorage("minesweeper", state)
 <template>
   <div>Minesweeper</div>
 
+  <div pt-3 flex="~ gap-1" justify-center items-center>
+    <button btn @click="reset()">NEW GAME</button>
+    <button btn @click="newGame('easy')">EASY</button>
+    <button btn @click="newGame('medium')">MEDIUM</button>
+    <button btn @click="newGame('hard')">HARD</button>
+  </div>
+
   <div p5 @contextmenu.prevent w-full overflow-auto>
     <div
       v-for="(row, y) in state.board"
@@ -201,8 +225,6 @@ useStorage("minesweeper", state)
     <button btn @click="toggleDev()">
       {{ isDev ? "DEV" : "NORMAL" }}
     </button>
-
-    <button btn @click="reset()">RESET</button>
   </div>
 
   <Confetti :passed="state.gameState === 'won'" />

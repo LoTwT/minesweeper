@@ -29,8 +29,8 @@ const getBlockClass = (block: BlockState) => {
     flex="~"
     justify-center
     items-center
-    min-w-10
-    min-h-10
+    min-w-8
+    min-h-8
     border="1 gray-400/30"
     :class="getBlockClass(block)"
   >
