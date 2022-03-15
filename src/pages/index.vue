@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { BlockState, GameState } from "~/types"
 import { isDev, toggleDev } from "~/composables"
-import { Ref } from "vue"
 
 let height = $ref(12)
 let width = $ref(12)
@@ -9,14 +8,14 @@ let mines = $ref(30)
 
 const now = $(useNow())
 
-const timerMS = $computed(() => Math.round((+now - state.value.startMS) / 1000))
+const timerMS = $computed(() => Math.round((+now - state.startMS) / 1000))
 
-const state = ref<GameState>() as Ref<GameState>
-const blocks = computed(() => state.value.board.flat())
+let state = $ref<GameState>()
+const blocks = $computed(() => state.board.flat())
 
 const minesRest = $computed(() => {
-  if (!state.value.mineGenerated) return mines
-  return blocks.value.reduce(
+  if (!state.mineGenerated) return mines
+  return blocks.reduce(
     (count, b) => count + (b.mine ? 1 : 0) - (b.flagged ? 1 : 0),
     0,
   )
@@ -37,7 +36,7 @@ const reset = (w = width, h = height, ms = mines) => {
   height = h
   mines = ms
 
-  state.value = {
+  state = {
     startMS: +Date.now(),
     mineGenerated: false,
     gameState: "play",
@@ -118,17 +117,17 @@ const updateNumbers = (state: BlockState[][]) => {
 }
 
 const onClick = (block: BlockState) => {
-  if (state.value.gameState !== "play") return
+  if (state.gameState !== "play") return
 
-  if (!state.value.mineGenerated) {
-    generateMines(state.value.board, block)
-    state.value.mineGenerated = true
+  if (!state.mineGenerated) {
+    generateMines(state.board, block)
+    state.mineGenerated = true
   }
 
   // 展开
   block.revealed = true
   if (block.mine) {
-    state.value.gameState = "lost"
+    state.gameState = "lost"
     showAllMines()
     return
   }
@@ -154,7 +153,7 @@ const getSiblings = (block: BlockState) => {
 
       if (x2 < 0 || x2 >= width || y2 < 0 || y2 >= height) return undefined
 
-      return state.value.board[y2][x2]
+      return state.board[y2][x2]
     })
     .filter(Boolean) as BlockState[]
 }
@@ -162,28 +161,28 @@ const getSiblings = (block: BlockState) => {
 // 右键标记
 // 需要拦截 contextmenu
 const onRightClick = (block: BlockState) => {
-  if (state.value.gameState !== "play") return
+  if (state.gameState !== "play") return
   if (block.revealed) return
   block.flagged = !block.flagged
 }
 
 const checkGameState = () => {
-  if (!state.value.mineGenerated) return
+  if (!state.mineGenerated) return
 
-  const blocks = state.value.board.flat()
+  const blocks = state.board.flat()
 
-  if (blocks.every((block) => block.revealed || block.flagged)) {
+  if (blocks.every((block) => block.revealed || block.flagged || block.mine)) {
     if (blocks.some((block) => block.flagged && !block.mine)) {
-      state.value.gameState = "lost"
+      state.gameState = "lost"
       showAllMines()
     } else {
-      state.value.gameState = "won"
+      state.gameState = "won"
     }
   }
 }
 
 const showAllMines = () => {
-  state.value.board.flat().forEach((i) => {
+  state.board.flat().forEach((i) => {
     if (i.mine) {
       i.revealed = true
     }
@@ -192,7 +191,7 @@ const showAllMines = () => {
 
 reset()
 watchEffect(checkGameState)
-useStorage("minesweeper", state)
+useStorage("minesweeper", $$(state))
 </script>
 
 <template>

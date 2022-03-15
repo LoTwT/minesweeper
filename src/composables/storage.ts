@@ -1,3 +1,3 @@
-export const isDev = ref(false)
+export const isDev = $ref(false)
 
-export const toggleDev = useToggle(isDev)
+export const toggleDev = useToggle($$(isDev))
