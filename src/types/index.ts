@@ -14,4 +14,5 @@ export interface GameState {
   board: BlockState[][]
   mineGenerated: boolean
   gameState: "play" | "won" | "lost"
+  startMS: number
 }

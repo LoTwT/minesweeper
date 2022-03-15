@@ -7,15 +7,20 @@ let height = $ref(12)
 let width = $ref(12)
 let mines = $ref(30)
 
+const now = $(useNow())
+
+const timerMS = $computed(() => Math.round((+now - state.value.startMS) / 1000))
+
 const state = ref<GameState>() as Ref<GameState>
 const blocks = computed(() => state.value.board.flat())
 
-const minesCount = computed(() =>
-  blocks.value.reduce((count, b) => {
-    count += b.mine ? 1 : 0
-    return count
-  }, 0),
-)
+const minesRest = $computed(() => {
+  if (!state.value.mineGenerated) return mines
+  return blocks.value.reduce(
+    (count, b) => count + (b.mine ? 1 : 0) - (b.flagged ? 1 : 0),
+    0,
+  )
+})
 
 const newGame = (difficulty: "easy" | "medium" | "hard") => {
   const map: Record<"easy" | "medium" | "hard", [number, number, number]> = {
@@ -33,6 +38,7 @@ const reset = (w = width, h = height, ms = mines) => {
   mines = ms
 
   state.value = {
+    startMS: +Date.now(),
     mineGenerated: false,
     gameState: "play",
     board: Array.from({ length: h }, (_, y) =>
@@ -199,6 +205,17 @@ useStorage("minesweeper", state)
     <button btn @click="newGame('hard')">HARD</button>
   </div>
 
+  <div mt-5 flex="~ gap-10" justify-center>
+    <div font-mono text-2xl flex="~ gap-1" items-center>
+      <div i-carbon-timer />
+      {{ timerMS }}
+    </div>
+    <div font-mono text-2xl flex="~ gap-1" items-center>
+      <div i-mdi-mine />
+      {{ minesRest }}
+    </div>
+  </div>
+
   <div p5 @contextmenu.prevent w-full overflow-auto>
     <div
       v-for="(row, y) in state.board"
@@ -218,8 +235,6 @@ useStorage("minesweeper", state)
       />
     </div>
   </div>
-
-  <div pb-3>minesCount: {{ minesCount }}</div>
 
   <div flex="~ gap-1" justify-center items-center>
     <button btn @click="toggleDev()">
