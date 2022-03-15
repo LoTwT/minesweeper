@@ -189,6 +189,27 @@ const showAllMines = () => {
   })
 }
 
+const autoExpand = (block: BlockState) => {
+  const siblings = getSiblings(block)
+  const flags = siblings.reduce((a, b) => a + (b.flagged ? 1 : 0), 0)
+  if (flags === block.adjacentMines) {
+    siblings.forEach((b) => (b.revealed = true))
+  }
+
+  const notRevealed = siblings.reduce(
+    (a, b) => a + (!b.revealed && !b.flagged ? 1 : 0),
+    0,
+  )
+  const missingFlags = block.adjacentMines - flags
+  if (notRevealed === missingFlags) {
+    siblings.forEach((b) => {
+      if (!b.revealed && !b.flagged) {
+        b.flagged = true
+      }
+    })
+  }
+}
+
 reset()
 watchEffect(checkGameState)
 useStorage("minesweeper", $$(state))
@@ -231,6 +252,7 @@ useStorage("minesweeper", $$(state))
         :block="block"
         @click="onClick(block)"
         @contextmenu.prevent="onRightClick(block)"
+        @dblclick="autoExpand(block)"
       />
     </div>
   </div>
