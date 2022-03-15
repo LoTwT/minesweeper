@@ -193,7 +193,12 @@ const autoExpand = (block: BlockState) => {
   const siblings = getSiblings(block)
   const flags = siblings.reduce((a, b) => a + (b.flagged ? 1 : 0), 0)
   if (flags === block.adjacentMines) {
-    siblings.forEach((b) => (b.revealed = true))
+    siblings.forEach((b) => {
+      b.revealed = true
+      if (b.mine && !b.flagged) {
+        onGameOver("lost")
+      }
+    })
   }
 
   const notRevealed = siblings.reduce(
