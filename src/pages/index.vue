@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BlockState, GameState } from "~/types"
+import type { BlockState, GameState, GameStatus } from "~/types"
 import { isDev, toggleDev } from "~/composables"
 
 let height = $ref(12)
@@ -8,7 +8,9 @@ let mines = $ref(30)
 
 const now = $(useNow())
 
-const timerMS = $computed(() => Math.round((+now - state.startMS) / 1000))
+const timerMS = $computed(() =>
+  Math.round(((state.endMS || +now) - state.startMS) / 1000),
+)
 
 let state = $ref<GameState>()
 const blocks = $computed(() => state.board.flat())
@@ -39,7 +41,7 @@ const reset = (w = width, h = height, ms = mines) => {
   state = {
     startMS: +Date.now(),
     mineGenerated: false,
-    gameState: "play",
+    status: "play",
     board: Array.from({ length: h }, (_, y) =>
       Array.from(
         { length: w },
@@ -117,7 +119,7 @@ const updateNumbers = (state: BlockState[][]) => {
 }
 
 const onClick = (block: BlockState) => {
-  if (state.gameState !== "play") return
+  if (state.status !== "play") return
 
   if (!state.mineGenerated) {
     generateMines(state.board, block)
@@ -127,8 +129,7 @@ const onClick = (block: BlockState) => {
   // 展开
   block.revealed = true
   if (block.mine) {
-    state.gameState = "lost"
-    showAllMines()
+    onGameOver("lost")
     return
   }
   expandZero(block)
@@ -161,7 +162,7 @@ const getSiblings = (block: BlockState) => {
 // 右键标记
 // 需要拦截 contextmenu
 const onRightClick = (block: BlockState) => {
-  if (state.gameState !== "play") return
+  if (state.status !== "play") return
   if (block.revealed) return
   block.flagged = !block.flagged
 }
@@ -173,10 +174,9 @@ const checkGameState = () => {
 
   if (blocks.every((block) => block.revealed || block.flagged || block.mine)) {
     if (blocks.some((block) => block.flagged && !block.mine)) {
-      state.gameState = "lost"
-      showAllMines()
+      onGameOver("lost")
     } else {
-      state.gameState = "won"
+      onGameOver("won")
     }
   }
 }
@@ -207,6 +207,18 @@ const autoExpand = (block: BlockState) => {
         b.flagged = true
       }
     })
+  }
+}
+
+const onGameOver = (status: GameStatus) => {
+  state.status = status
+  state.endMS = +Date.now()
+
+  if (status === "lost") {
+    setTimeout(() => {
+      alert("lost")
+    }, 10)
+    showAllMines()
   }
 }
 
@@ -263,5 +275,5 @@ useStorage("minesweeper", $$(state))
     </button>
   </div>
 
-  <Confetti :passed="state.gameState === 'won'" />
+  <Confetti :passed="state.status === 'won'" />
 </template>

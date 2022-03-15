@@ -10,9 +10,12 @@ export interface BlockState {
   adjacentMines: number
 }
 
+export type GameStatus = "play" | "won" | "lost"
+
 export interface GameState {
   board: BlockState[][]
   mineGenerated: boolean
-  gameState: "play" | "won" | "lost"
+  status: GameStatus
   startMS: number
+  endMS?: number
 }
