@@ -16,6 +16,5 @@ export interface GameState {
   board: BlockState[][]
   mineGenerated: boolean
   status: GameStatus
-  startMS: number
-  endMS?: number
+  duration: number
 }

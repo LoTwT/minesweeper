@@ -6,14 +6,22 @@ let height = $ref(12)
 let width = $ref(12)
 let mines = $ref(30)
 
-const now = $(useNow())
-
-const timerMS = $computed(() =>
-  Math.round(((state.endMS || +now) - state.startMS) / 1000),
-)
-
 let state = $ref<GameState>()
 const blocks = $computed(() => state.board.flat())
+
+const {
+  isActive: onDuration,
+  pause: pauseDuration,
+  resume: resumeDuration,
+} = $(
+  useTimeoutPoll(
+    () => {
+      state.duration += 1
+    },
+    1000,
+    { immediate: state?.status === "play" },
+  ),
+)
 
 const minesRest = $computed(() => {
   if (!state.mineGenerated) return mines
@@ -39,7 +47,7 @@ const reset = (w = width, h = height, ms = mines) => {
   mines = ms
 
   state = {
-    startMS: +Date.now(),
+    duration: 0,
     mineGenerated: false,
     status: "play",
     board: Array.from({ length: h }, (_, y) =>
@@ -120,6 +128,8 @@ const updateNumbers = (state: BlockState[][]) => {
 
 const onClick = (block: BlockState) => {
   if (state.status !== "play") return
+
+  if (!onDuration) resumeDuration()
 
   if (!state.mineGenerated) {
     generateMines(state.board, block)
@@ -217,7 +227,7 @@ const autoExpand = (block: BlockState) => {
 
 const onGameOver = (status: GameStatus) => {
   state.status = status
-  state.endMS = +Date.now()
+  pauseDuration()
 
   if (status === "lost") {
     setTimeout(() => {
@@ -245,7 +255,7 @@ useStorage("minesweeper", $$(state))
   <div mt-5 flex="~ gap-10" justify-center>
     <div font-mono text-2xl flex="~ gap-1" items-center>
       <div i-carbon-timer />
-      {{ timerMS }}
+      {{ state.duration }}
     </div>
     <div font-mono text-2xl flex="~ gap-1" items-center>
       <div i-mdi-mine />
