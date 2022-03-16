@@ -9,6 +9,7 @@ import AutoImport from "unplugin-auto-import/vite"
 import Unocss from "unocss/vite"
 
 export default defineConfig({
+  base: "minesweeper",
   resolve: {
     alias: {
       "~/": `${path.resolve(__dirname, "src")}/`,
